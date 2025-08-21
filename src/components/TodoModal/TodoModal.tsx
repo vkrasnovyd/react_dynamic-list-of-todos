@@ -4,6 +4,7 @@ import { Loader } from '../Loader';
 import { getUser } from '../../api';
 import { Todo } from '../../types/Todo';
 import { User } from '../../types/User';
+import { ErrorBlock } from '../ErrorBlock';
 
 interface Props {
   todo: Todo;
@@ -13,13 +14,16 @@ interface Props {
 export const TodoModal: React.FC<Props> = ({ todo, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(new Date());
 
   useEffect(() => {
     setLoading(true);
     getUser(todo.userId)
       .then(setUser)
+      .catch(() => setError('Failed to get data from server'))
       .finally(() => setLoading(false));
-  }, [todo]);
+  }, [todo, updatedAt]);
 
   return (
     <div className="modal is-active" data-cy="modal">
@@ -46,22 +50,32 @@ export const TodoModal: React.FC<Props> = ({ todo, onClose }) => {
           </header>
 
           <div className="modal-card-body">
-            <p className="block" data-cy="modal-title">
-              {todo.title}
-            </p>
+            {error ? (
+              <ErrorBlock
+                error={error}
+                setError={setError}
+                updateTimestamp={setUpdatedAt}
+              />
+            ) : (
+              <>
+                <p className="block" data-cy="modal-title">
+                  {todo.title}
+                </p>
 
-            <p className="block" data-cy="modal-user">
-              <strong
-                className={
-                  todo.completed ? 'has-text-success' : 'has-text-danger'
-                }
-              >
-                {todo.completed ? 'Done' : 'Planned'}
-              </strong>
-              {' by '}
+                <p className="block" data-cy="modal-user">
+                  <strong
+                    className={
+                      todo.completed ? 'has-text-success' : 'has-text-danger'
+                    }
+                  >
+                    {todo.completed ? 'Done' : 'Planned'}
+                  </strong>
+                  {' by '}
 
-              {user && <a href={`mailto:${user.email}`}>{user.name}</a>}
-            </p>
+                  {user && <a href={`mailto:${user.email}`}>{user.name}</a>}
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}

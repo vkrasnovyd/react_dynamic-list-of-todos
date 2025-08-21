@@ -10,6 +10,7 @@ import { Loader } from './components/Loader';
 import { ProgressStatusOption } from './types/ProgessStatusOptions';
 import { Todo } from './types/Todo';
 import { filterTodos } from './services/filterTodos';
+import { ErrorBlock } from './components/ErrorBlock';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -17,13 +18,16 @@ export const App: React.FC = () => {
   const [query, setQuery] = useState('');
   const [filterValue, setFilterValue] = useState<ProgressStatusOption>('all');
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [error, setError] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(new Date());
 
   useEffect(() => {
     setLoading(true);
     getTodos()
       .then(setTodos)
+      .catch(() => setError('Failed to get data from server.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [updatedAt]);
 
   return (
     <>
@@ -42,13 +46,21 @@ export const App: React.FC = () => {
             </div>
 
             <div className="block">
-              {loading ? (
-                <Loader />
-              ) : (
+              {loading && <Loader />}
+
+              {!loading && !error && (
                 <TodoList
                   todos={filterTodos(todos, query, filterValue)}
                   selectedTodo={selectedTodo}
                   setSelectedTodo={setSelectedTodo}
+                />
+              )}
+
+              {!loading && error && (
+                <ErrorBlock
+                  error={error}
+                  setError={setError}
+                  updateTimestamp={setUpdatedAt}
                 />
               )}
             </div>
